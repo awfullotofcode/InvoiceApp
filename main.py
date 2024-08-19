@@ -28,6 +28,8 @@ def menu():
             # create invoice
             create_invoice()
         elif menu_action in ('edit','edt','eit','2'):
+            # TODO: NEXT TASK
+            # Finish edit_invoice()
             print("TODO: edit_invoice()")
         elif menu_action in ('view','v','vie','vew','veiw','vw','3'):
             print("TODO: view_invoices()")
@@ -47,23 +49,24 @@ def create_invoice():
 
     get_invoice_details()
     get_invoice_items()
+    display_invoice()
     current_invoice_actions()
 
 
 def current_invoice_actions():
     print("____________________")
     while True:
-        display_invoice()
         menu_action = input("[1]SAVE | [2]EDIT\n[3]PRINT| [4]EXIT\n[5]RETURN TO MENU ->\nSelect: ").strip().lower()
 
         if menu_action in ('save','sve','sae','s','1'):
-            # save_invoice()
+            display_invoice()
             save_invoice()
         elif menu_action in ('edit','edt','eit','2'):
             print("TODO: edit_invoice()")
+            display_invoice()
         elif menu_action in ('print','pirnt','prnt','pint','p','3'):
             # TODO
-            return
+            print("TODO: print_invoice()")
         elif menu_action in ('menu','men','meu','m','rtm','return to menu','r','5'):
             print("menu()")
             menu()
