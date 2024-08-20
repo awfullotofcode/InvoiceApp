@@ -1,8 +1,25 @@
 # Invoice App
-#### Video Demo: <URL HERE>
+#### [Video Demo](https://www.youtube.com/watch?v=X3A4YukxwSI&t=4s)
 ## Description
 
 As an aspiring developer with a keen interest in simplifying workflows, I built the Invoice App to tackle the inefficiencies I experienced while creating invoices manually. Using Google Docs for this task felt cumbersome—constant reformatting and excessive clicking were major time sinks. To solve this, I designed the Invoice App, a command-line interface (CLI) tool crafted to streamline invoicing by minimizing mouse usage and enabling rapid data entry through keyboard commands.
+# Summary of Files
+
+## `main.py`
+
+The `main.py` file is the core of the invoice management system. It establishes a connection to a SQLite database and provides a menu-driven interface for creating, editing, and viewing invoices. Users can navigate through options to create a new invoice, edit existing ones, or view details. The file manages invoice details and items, allowing for comprehensive invoice handling, including saving changes to the database. It also includes functionality for user interactions, such as confirming details and printing invoices, ensuring that all actions are correctly processed and recorded.
+
+## `formatting_helpers.py`
+
+The `formatting_helpers.py` file contains functions to validate and format user input related to invoice data. It includes functions for converting state names to abbreviations, parsing dates in multiple formats, and ensuring numeric input for invoice numbers, quantities, and monetary amounts. These functions handle user input errors by prompting for re-entry and apply appropriate formatting, such as converting dates to SQL format and monetary amounts to float. This ensures that all user inputs are correctly formatted and validated before being used in invoice processing.
+
+## `invoice_editing_helpers.py`
+
+The `invoice_editing_helpers.py` file provides functions for editing invoice details and items. It allows users to modify various invoice details like state, date, and invoice number, applying necessary formatting and validation. The file also enables users to update individual invoice items, including fields such as name, description, quantity, and amount. It displays current values for review, prompts for new input, and applies changes based on user selections. This interactive editing ensures that invoice data can be accurately updated and maintained.
+
+## `print_helpers.py`
+
+The `print_helpers.py` file includes functions for confirming and previewing invoice details. The `details_confirmed()` function prompts users to confirm if the displayed information is correct, handling various affirmative and negative responses. The `preview_invoice_item()` function provides a formatted display of an invoice item, including monetary values formatted with a dollar sign and commas. These functions enhance user interaction by ensuring that invoice information is reviewed and confirmed before finalization, contributing to accurate and clear invoice processing.
 
 ## Key Features
 
