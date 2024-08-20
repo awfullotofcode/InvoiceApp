@@ -39,7 +39,3 @@ This choice of database technology ensures that the app remains responsive and e
 A key design choice in the app is the emphasis on user confirmation and validation throughout the invoicing process. By including multiple prompts for you to review and confirm your input, the app reduces the likelihood of errors and ensures that all invoices are created with accurate information.
 
 These validation steps are strategically placed at various points in the workflow, helping to catch mistakes early and maintain data integrity. This approach not only enhances the reliability of the invoicing process but also fosters a smoother user experience by providing opportunities to correct errors before they impact billing or client relationships.
-
-## Conclusion
-
-Overall, the Invoice App is designed to make invoicing faster, more accurate, and less tedious. By leveraging a CLI for efficient data entry and incorporating features for creating, editing, and viewing invoices, the app provides a powerful tool for managing invoicing tasks with minimal effort.
