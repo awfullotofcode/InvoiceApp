@@ -2,7 +2,9 @@ from datetime import datetime
 import re
 import sqlite3
 import sys
-import us
+from formatting_helpers import get_state_abbreviation, get_date_input, get_invoice_no, get_quantity_input, get_usd_amount_input
+from invoice_editing_helpers import edit_invoice_details, edit_invoice_items
+from print_helpers import details_confirmed, preview_invoice_item
 
 # Setup database connection
 conn = sqlite3.connect('test.db')
@@ -14,11 +16,16 @@ invoice_items = []
 def main():
     # Main menu create/edit/preview invoice
     try:
+        print_intro()
         menu()
     finally:
         conn.commit()
         conn.close()
 
+def print_intro():
+    print("   ____              _           ___           \n  /  _/__ _  _____  (_)______   / _ | ___  ___\n _/ // _ \ |/ / _ \/ / __/ -_) / __ |/ _ \/ _ \n/___/_//_/___/\___/_/\__/\__/ /_/ |_/ .__/ .__/\n                                   /_/  /_/    ")
+    print("                    By: Abraham Gomez\n                    GitHub: awfullotofcode\n                    Salt Lake City, UT\n                    08-20-2024")
+    return
 def menu():
 
     while True:
@@ -30,7 +37,7 @@ def menu():
         elif menu_action in ('edit','edt','eit','2'):
             edit_invoice()
         elif menu_action in ('view','v','vie','vew','veiw','vw','3'):
-            print("TODO: view_invoices()")
+            view_invoice()
         elif menu_action == 'exit' or menu_action == '4':
             sys.exit()
         else:
@@ -65,6 +72,9 @@ def edit_invoice():
         else:
             print("Invalid selection.")
 
+def view_invoice():
+    search_by_invoice()
+
 def search_by_invoice():
     while True:
         # Get invoice selection
@@ -85,8 +95,7 @@ def search_by_invoice():
             return
 
 def search_invoice_no(invoice_no):
-    
-    
+
     # Query for all matching invoices
     cursor.execute('''
         SELECT id, invoice_no, client_id, date, po, sales_rep, project
@@ -176,10 +185,6 @@ def search_invoice_no(invoice_no):
         invoice_editor(invoice_details,invoice_items)
     else:
         print("Invoice number not found.")
-    
-# turn invoice query results into invoice_details(dictionary) & invoice_items(list of dictionaries)
-# Pass invoice_details and invoice_items into invoice_editor
-# invoice_editor(invoice_details,invoice_items)
 
 def search_by_client():
     # TODO
@@ -204,111 +209,11 @@ def invoice_editor(invoice_details=None,invoice_items=None):
         elif edit_option in ('3','save changes','sc','save change'):
             # Display to user invoice details then menu options
             display_invoice(invoice_details,invoice_items)
+            save_invoice()
             return
         else:
             print("Please enter a valid selection.")
 
-def edit_invoice_details(invoice_details=None):
-    if invoice_details is None:
-        invoice_details = globals().get('invoice_details', {})
-    while True:
-        print("Current invoice details:")
-        for idx, (key, value) in enumerate(invoice_details.items(), start=1):
-            if key == 'usd':
-                value = f"${value:,.2f}"
-            print(f"[{idx}] {key.capitalize()}: {value}")
-
-        print("[0] Save and exit")
-        selection = input("Select detail to edit: ").strip()
-
-        if selection == '0':
-            return
-
-        try:
-            detail_index = int(selection)
-            if 1 <= detail_index <= len(invoice_details):
-                detail_key = list(invoice_details.keys())[detail_index - 1]
-                current_value = invoice_details[detail_key]
-                print(f"Editing '{detail_key.capitalize()}'.\nCurrent: {current_value}")
-
-                # Collect new value for the selected detail
-                if detail_key == 'state':
-                    new_value = get_state_abbreviation(input(f"New value for {detail_key.capitalize()}: ") or current_value)
-                elif detail_key == 'date':
-                    new_value = get_date_input(f"New value for {detail_key.capitalize()} (MM-DD-YYYY): ") or current_value
-                elif detail_key == 'invoice no':
-                    new_value = get_invoice_no(f"New value for {detail_key.capitalize()}: ") or current_value
-                else:
-                    new_value = input(f"New value for {detail_key.capitalize()}: ") or current_value
-
-                # Update the invoice details dictionary with the new value
-                invoice_details[detail_key] = new_value
-            else:
-                print("Invalid selection. Please select a valid number.")
-        except ValueError:
-            print("Invalid input. Please enter a number.")
-
-def edit_invoice_items(invoice_items=None):
-    if invoice_items is None:
-        invoice_items = globals().get('invoice_items', [])
-
-    if not invoice_items:
-        print("No items to edit.")
-        return
-
-    while True:
-        # Display all items with their index as item_no
-        print("____________________\nCurrent invoice items:\n\n")
-        for index, item in enumerate(invoice_items):
-
-            print(f"Item [{index + 1}]:\nName: {item['name']}\nDescription: {item['description']}\nQty: {item['quantity']}\nAmount: ${item['usd']:,.2f}")
-            print("----------")
-
-        # Select item to edit based on index
-        item_no_to_edit = input("Enter the Item No to edit (or '0' to return): \n\n").strip()
-
-        if item_no_to_edit == '0':
-            return
-        
-        try:
-            item_no_to_edit = int(item_no_to_edit) - 1
-            if 0 <= item_no_to_edit < len(invoice_items):
-                item_to_edit = invoice_items[item_no_to_edit]
-
-                print(f"Editing Item No: {item_no_to_edit + 1}")
-                print(f"[1]Name: {item_to_edit['name']}")
-                print(f"[2]Description: {item_to_edit['description']}")
-                print(f"[3]Quantity: {item_to_edit['quantity']}")
-                print(f"[4]Amount: ${item_to_edit['usd']:,.2f}")
-                print("[0]Save and exit")
-
-                while True:
-                    edit_field = input("Select: ").strip()
-
-                    if edit_field == '1':
-                        new_name = input("Enter new name (or press Enter to keep current): \n\n").strip()
-                        if new_name:
-                            item_to_edit['name'] = new_name
-                    elif edit_field == '2':
-                        new_description = input("Enter new description (or press Enter to keep current): \n\n").strip()
-                        if new_description:
-                            item_to_edit['description'] = new_description
-                    elif edit_field == '3':
-                        new_quantity = get_quantity_input("Enter new quantity (or press Enter to keep current): \n\n")
-                        if new_quantity is not None:
-                            item_to_edit['quantity'] = new_quantity
-                    elif edit_field == '4':
-                        new_amount = get_usd_amount_input("Enter new amount (or press Enter to keep current): \n\n")
-                        if new_amount is not None:
-                            item_to_edit['usd'] = new_amount
-                    elif edit_field == '0':
-                        break
-                    else:
-                        print("Invalid selection. Please enter a valid number.")
-            else:
-                print("Invalid Item No. Please try again.")
-        except ValueError:
-            print("Invalid input. Please enter a valid number.")
 
 def current_invoice_actions():
     print("____________________")
@@ -392,14 +297,6 @@ def get_invoice_items():
                 else:
                     print("please enter Y/N")
 
-def preview_invoice_item(item):
-    print("____________________")
-    print("Please review the following:")
-    for key, value in item.items():
-        if key == 'usd':
-            value = f"${value:,.2f}"
-        print(f"{key.capitalize()}: {value}")
-
 def display_invoice(invoice_details=None, invoice_items=None):
     # Use global variables if no arguments are provided
     if invoice_details is None:
@@ -433,7 +330,6 @@ def display_invoice(invoice_details=None, invoice_items=None):
     return
 
 def save_invoice():
-    # Start a transaction
     try:
         # Check if the client already exists
         cursor.execute("""
@@ -452,8 +348,6 @@ def save_invoice():
             client_id = existing_client[0]
         else:
             # Insert into clients table
-            # TODO insert po into clients
-            # TODO Alter clients and invoices table (po column is in invoices table when it should be in clients)
             cursor.execute("""
                 INSERT INTO clients (name, street, city, state, zip)
                 VALUES (?, ?, ?, ?, ?)
@@ -464,62 +358,71 @@ def save_invoice():
                 invoice_details['state'],
                 invoice_details['zip']
             ))
-            # Get the id of the newly inserted client
             client_id = cursor.lastrowid
 
-        # Insert into invoices table
+        # Check if the invoice already exists
         cursor.execute("""
-            INSERT INTO invoices (invoice_no, client_id, date, sales_rep, project)
-            VALUES (?, ?, ?, ?, ?)
-        """, (
-            invoice_details['invoice no'],
-            client_id,
-            invoice_details['date'],
-            invoice_details['sales rep'],
-            invoice_details['project']
-        ))
+            SELECT id FROM invoices WHERE invoice_no = ?
+        """, (invoice_details['invoice no'],))
+        existing_invoice = cursor.fetchone()
 
-        # Get the id of the newly inserted invoice
-        invoice_id = cursor.lastrowid
+        if existing_invoice:
+            # Invoice exists, use existing invoice ID
+            invoice_id = existing_invoice[0]
+            # Update the existing invoice
+            cursor.execute("""
+                UPDATE invoices
+                SET client_id = ?, date = ?, sales_rep = ?, project = ?
+                WHERE id = ?
+            """, (
+                client_id,
+                invoice_details['date'],
+                invoice_details['sales rep'],
+                invoice_details['project'],
+                invoice_id
+            ))
+
+            # Remove old items from this invoice
+            cursor.execute("""
+                DELETE FROM invoice_items WHERE invoice_id = ?
+            """, (invoice_id,))
+        else:
+            # Insert into invoices table
+            cursor.execute("""
+                INSERT INTO invoices (invoice_no, client_id, date, sales_rep, project)
+                VALUES (?, ?, ?, ?, ?)
+            """, (
+                invoice_details['invoice no'],
+                client_id,
+                invoice_details['date'],
+                invoice_details['sales rep'],
+                invoice_details['project']
+            ))
+            invoice_id = cursor.lastrowid
 
         # Insert items into invoice_items table
         for item_no, item in enumerate(invoice_items, start=1):
-
             amount_in_cents = int(round(item['usd'] * 100))
             cursor.execute("""
                 INSERT INTO invoice_items (invoice_id, item_no, name, description, quantity, amount)
                 VALUES (?, ?, ?, ?, ?, ?)
             """, (
                 invoice_id,
-                item_no,  # item_no is the index + 1 in the list
+                item_no,
                 item['name'],
                 item['description'],
                 item['quantity'],
-                amount_in_cents  # Ensure this is a float value
+                amount_in_cents
             ))
 
-        # Commit all changes after the loop
         conn.commit()
-        print("Invoice saved succesfully.")
+        print("Invoice saved successfully.")
 
     except sqlite3.Error as e:
-        # Roll back in case of error
         print(f"An error occurred: {e}")
         conn.rollback()
-    return
 
-def details_confirmed():
-    while True:
-        confirm_details = input("Does this information look correct? Y/N: ").strip().lower()
 
-        if confirm_details in ('y','yes','yea','yee','yeah','ya','ye'):
-            print("Invoice details confirmed.")
-            return True
-        elif confirm_details in ('no','nah','na','n'):
-            print("Re-enter details below.")
-            return False
-        else:
-            print("Enter Y or N.")
 
 def check_if_client_exists(invoice_details):
     cursor.execute("""
@@ -533,83 +436,6 @@ def check_if_client_exists(invoice_details):
     ))
     existing_client = cursor.fetchone()
     return existing_client
-
-# Data validation and formatting functions
-def get_state_abbreviation(state_input):
-    state = us.states.lookup(state_input)
-    if state:
-        return state.abbr
-    else:
-        # Check if input is already an abbreviation
-        state = us.states.lookup(state_input.upper())
-        if state:
-            return state.abbr
-        else:
-            return None
-        
-def get_date_input(prompt):
-    date_formats = ['%m%d%Y', '%m/%d/%Y', '%m-%d-%Y']
-    
-    while True:
-        date_str = input(prompt).strip()
-        
-        # Use today's date if no input is given
-        if not date_str:
-            date_obj = datetime.now()
-            return date_obj.strftime('%Y-%m-%d')
-        
-        for date_format in date_formats:
-            try:
-                # Attempt to parse the date string
-                date_obj = datetime.strptime(date_str, date_format)
-                # Format the date in SQL format YYYY-MM-DD
-                return date_obj.strftime('%Y-%m-%d')
-            except ValueError:
-                # Continue to try other formats if parsing fails
-                continue
-        
-        # If none of the formats match, prompt the user again
-        print("Invalid date format. Please use MMDDYYYY, MM/DD/YYYY, or MM-DD-YYYY.")
-
-def get_invoice_no(prompt):
-    while True:
-        invoice_no_input = input(prompt)
-
-        if invoice_no_input.isdigit():
-            return invoice_no_input
-        elif invoice_no_input == '':
-            DEFAULT_INVOICE_NO = 9999
-            invoice_no_input = DEFAULT_INVOICE_NO
-            return invoice_no_input
-        else:
-            print("Invalid number.")
-
-def get_quantity_input(prompt):
-    while True:
-        quantity_input = input(prompt).strip()
-        
-        if quantity_input.isdigit():  # Handle optional negative sign
-            return int(quantity_input)
-        elif quantity_input == '':
-            return 1
-        else:
-            print("Invalid input. Please enter a valid quantity.")
-
-def get_usd_amount_input(prompt):
-    while True:
-        amount_input = input(prompt).strip()
-
-        if amount_input == '':
-            return 0.0
-        else:
-            try:
-                # Convert input to float
-                amount = float(amount_input)
-                
-                # Return the valid amount
-                return amount
-            except ValueError:
-                print("Invalid input. Please enter a valid amount (e.g., 123.45).")
 
         
 main()
